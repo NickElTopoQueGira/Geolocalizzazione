@@ -21,7 +21,7 @@ public partial class MainPage : ContentPage{
 			var richiesti = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
 
 			if (richiesti == PermissionStatus.Granted){
-				geolocalizza();
+				await geolocalizza();
 
 			}else{
 				if (DeviceInfo.Platform == DevicePlatform.Android){

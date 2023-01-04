@@ -17,7 +17,7 @@
             <Label
                 x:Name="Visualizza"
                 Text=""
-                FontSize="32"
+                FontSize="18"
                 HorizontalOptions="Center"/>
 
             <Button
@@ -25,7 +25,13 @@
                 Text="Localizzami"
                 Clicked="LocalizzazioneBtn_Clicked"
                 HorizontalOptions="Center" />
-
+            
+            <Label
+                x:Name="PathLabel"
+                Text=""
+                FontSize="18"
+                HorizontalOptions="Center"/>
+            
         </VerticalStackLayout>
     </ScrollView>
 

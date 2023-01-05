@@ -18,25 +18,50 @@ public partial class MainPage : ContentPage{
 	protected async void VerificaPermessi()
 	{
         // Controllo dei permessi
-        permessi = await Permissions.CheckStatusAsync < Permissions.LocationWhenInUse>();
+        var location = await Permissions.CheckStatusAsync < Permissions.LocationWhenInUse>();
+        var storage = await Permissions.CheckStatusAsync<Permissions.StorageWrite>();
 
-        if (permessi != PermissionStatus.Granted)
-		{
-            if (DeviceInfo.Platform == DevicePlatform.Android)
+        if(DeviceInfo.Platform == DevicePlatform.Android || DeviceInfo.Platform == DevicePlatform.iOS)
+        {
+            
+            if (location == PermissionStatus.Granted && storage == PermissionStatus.Granted)
             {
-                await App.Current.MainPage.DisplayAlert("Richiesti i permessi di geolocalizzazione", "Permessi di geolocalizzazione necessari", "OK");
-                permessi = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+                permessi = PermissionStatus.Granted;
             }
-            else if (DeviceInfo.Platform == DevicePlatform.iOS)
+            else if (permessi != PermissionStatus.Granted)
             {
+                await App.Current.MainPage.DisplayAlert("Richiesti i permessi di scrittura su disco", "Permessi di scrittura sul disco", "OK");
+                storage = await Permissions.RequestAsync<Permissions.StorageWrite>();
+
                 await App.Current.MainPage.DisplayAlert("Richiesti i permessi di geolocalizzazione", "Permessi di geolocalizzazione necessari", "OK");
-                permessi = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+                location = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+
+                if (storage == PermissionStatus.Granted && location == PermissionStatus.Granted)
+                    permessi = PermissionStatus.Granted;
+                else
+                    VerificaPermessi();
             }
             else
             {
-                await App.Current.MainPage.DisplayAlert("Dispositivo non supportato", "Dispositivo non supportato", "OK");
+                if (location == PermissionStatus.Granted && (storage == PermissionStatus.Unknown || storage == PermissionStatus.Denied || storage == PermissionStatus.Limited || storage == PermissionStatus.Restricted))
+                {
+                    await App.Current.MainPage.DisplayAlert("Richiesti i permessi di scrittura su disco", "Permessi di scrittura sul disco", "OK");
+                    storage = await Permissions.RequestAsync<Permissions.StorageWrite>();
+                    if (storage == PermissionStatus.Granted) permessi = PermissionStatus.Granted;
+                }
+                else if (storage == PermissionStatus.Granted && (location == PermissionStatus.Unknown || location == PermissionStatus.Denied || location == PermissionStatus.Limited || location == PermissionStatus.Restricted))
+                {
+                    await App.Current.MainPage.DisplayAlert("Richiesti i permessi di geolocalizzazione", "Permessi di geolocalizzazione necessari", "OK");
+                    location = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+                    if (location == PermissionStatus.Granted) permessi = PermissionStatus.Granted;
+                }
             }
         }
+        else
+        {
+            await App.Current.MainPage.DisplayAlert("Dispositivo non supportato", "Dispositivo non supportato", "OK");
+        }
+
     }
 
     private async void LocalizzazioneBtn_Clicked(object sender, EventArgs e){

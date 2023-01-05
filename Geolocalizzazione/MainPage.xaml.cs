@@ -9,7 +9,6 @@ public partial class MainPage : ContentPage{
 
 	private PermissionStatus permessi = PermissionStatus.Unknown; 
 
-
     public MainPage(){
 		InitializeComponent();
 		VerificaPermessi();
@@ -73,7 +72,7 @@ public partial class MainPage : ContentPage{
 		}
         else
         {
-            await App.Current.MainPage.DisplayAlert("Richiesti i permessi di geolocalizzazione", "Permessi di geolocalizzazione necessari", "OK");
+            await App.Current.MainPage.DisplayAlert("Richiesti i permessi", "Permessi di geolocalizzazione e di scrittura necessari", "OK");
             VerificaPermessi();
         }
 

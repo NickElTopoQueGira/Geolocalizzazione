@@ -1,17 +1,21 @@
-﻿using System.Diagnostics;
-using System.Reflection.Metadata;
-using Microsoft.Maui.Controls.PlatformConfiguration;
-using Microsoft.VisualBasic;
+﻿// code base : https://www.youtube.com/watch?v=xJQXqxkpWTg
+
+using Geolocalizzazione.DataModel;
+using Geolocalizzazione.SaveData;
 
 namespace Geolocalizzazione;
 
 public partial class MainPage : ContentPage{
 
-	private PermissionStatus permessi = PermissionStatus.Unknown; 
+	private PermissionStatus permessi = PermissionStatus.Unknown;
+
+    private readonly SaveDataOnDatabase database;
 
     public MainPage(){
 		InitializeComponent();
 		VerificaPermessi();
+
+        database = new SaveDataOnDatabase();
 	}
 
 	protected async void VerificaPermessi()
@@ -68,7 +72,30 @@ public partial class MainPage : ContentPage{
 		// se i permessi sono garantiti, viene chiamato il metodo per la geolocalizzazione
 		if(permessi == PermissionStatus.Granted)
         {
-			await Geolocalizza();
+            var esitoGeolocalizzazione = await Geolocalizza();
+
+            // salvataggio sul database
+
+            GeoItem nuovaPosizione = new()
+            {
+                Data = DateTime.Now,
+                Latitudine = esitoGeolocalizzazione.Latitude,
+                Longitudine = esitoGeolocalizzazione.Longitude,
+                Altitudine = (double) esitoGeolocalizzazione.Altitude
+            };
+
+            int esitoSalvataggio = await database.AggiungiGeoItem(nuovaPosizione);
+            if(esitoSalvataggio != 0)
+            {
+                await App.Current.MainPage.DisplayAlert("Inserimento Eseguito", $"Id Generato da SQLite: {nuovaPosizione.Id}", "OK");
+            }
+            else
+            {
+                await App.Current.MainPage.DisplayAlert("Inserimento FALLITO", "", "OK");
+            }
+
+            // salvataggio delle posizioni in un file di testo
+            SalvaDati(esitoSalvataggio.ToString());
 		}
         else
         {
@@ -78,23 +105,12 @@ public partial class MainPage : ContentPage{
 
     }
 
-	private async Task Geolocalizza(){
+	private static async Task<Location> Geolocalizza(){
 		var richiesta = new GeolocationRequest(GeolocationAccuracy.Best);
-		var datiGeolocalizzazione = await Geolocation.GetLocationAsync(richiesta);
-
-        string text = $"Latitudine: {datiGeolocalizzazione.Latitude} - Longitudine: {datiGeolocalizzazione.Longitude} - Altitudine: {datiGeolocalizzazione.Altitude}";
-
-        // Notifica su schermo
-        //await App.Current.MainPage.DisplayAlert("GEOLOCALIZZATO",
-        //	text , "OK");
-
-        // Visualizzazione sulla label
-        Visualizza.Text = text;
-
-		// slavataggio dei dati in un file .csv
-		SalvaDati(text);
+        return await Geolocation.GetLocationAsync(richiesta);
 	}
 
+    // salvataggio dati in un file di testo
 	private void SalvaDati(string text)
     {
         SavePosition salvaPosizioni = new();
@@ -110,4 +126,5 @@ public partial class MainPage : ContentPage{
 		else if (!salvaPosizioni.VerificaEsistenza(path))
 			salvaPosizioni.CreaFile(path, text);
     }
+
 }
